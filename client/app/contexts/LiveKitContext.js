@@ -73,8 +73,9 @@ export function LiveKitProvider({ children }) {
       if (!roomCreated) return false;
       
       // Get token from your token service
-      const response = await axios.get(
-        `${backendUrl}/token?room=${roomNameInput}&username=${usernameInput}`
+      const response = await axios.post(
+        `${backendUrl}/token`,
+        { room: roomNameInput, username: usernameInput }
       );
       
       const { token } = response.data;
