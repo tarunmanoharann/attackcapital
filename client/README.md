@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Memory-Enhanced AI Chat Frontend
 
-## Getting Started
+This is the Next.js frontend for the Memory-Enhanced AI Chat Agent. It provides a user interface for joining LiveKit rooms and chatting with an AI agent that remembers previous conversations.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- User authentication with username and room name
+- Real-time chat interface using LiveKit
+- Interaction with an AI agent that remembers past conversations
+- Responsive design that works on desktop and mobile
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- Node.js 18+ and npm
+- Backend server running (see backend README)
+- LiveKit account and API credentials
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup
 
-## Learn More
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Create a `.env.local` file based on the `.env.example` template and fill in your credentials:
+   ```
+   # LiveKit Configuration
+   NEXT_PUBLIC_LIVEKIT_URL=wss://your-livekit-instance.livekit.cloud
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   # Backend API URL
+   NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Enter your name and a room name on the login screen
+2. Click "Join Room" to connect to the chat
+3. Start chatting with the AI agent
+4. The AI will remember your previous conversations and provide context-aware responses
+5. Click "Leave Room" to disconnect from the chat
+
+## How It Works
+
+1. The frontend connects to LiveKit using the provided credentials
+2. When a user joins a room, the backend creates the room if it doesn't exist and adds an AI agent
+3. Messages are sent and received in real-time through LiveKit
+4. The AI agent retrieves relevant past conversations from its memory store to provide context-aware responses
