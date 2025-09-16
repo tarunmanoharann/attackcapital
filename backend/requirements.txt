@@ -1,0 +1,12 @@
+livekit-agents==0.1.0
+python-dotenv==1.0.1
+openai==1.14.0
+fastapi==0.110.0
+uvicorn==0.29.0
+pydantic==2.6.3
+python-multipart==0.0.9
+mem0==0.1.0
+langchain==0.1.12
+langchain-openai==0.1.1
+chroma-hnswlib==0.7.3
+chromdb==0.4.22
