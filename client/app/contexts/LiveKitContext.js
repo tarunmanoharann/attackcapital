@@ -17,9 +17,25 @@ export function LiveKitProvider({ children }) {
   const [roomName, setRoomName] = useState('');
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
   const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  
+  // Load session from localStorage on initial render
+  useEffect(() => {
+    const savedSession = localStorage.getItem('chatSession');
+    if (savedSession) {
+      const { username: savedUsername, roomName: savedRoomName } = JSON.parse(savedSession);
+      if (savedUsername && savedRoomName) {
+        setUsername(savedUsername);
+        setRoomName(savedRoomName);
+        // Reconnect to room
+        connectToRoom(savedRoomName, savedUsername);
+      }
+    }
+    setIsLoading(false);
+  }, []);
   
   // Initialize room
   useEffect(() => {
@@ -84,6 +100,12 @@ export function LiveKitProvider({ children }) {
       await room.connect(livekitUrl, token);
       setConnected(true);
       
+      // Save session to localStorage
+      localStorage.setItem('chatSession', JSON.stringify({
+        username: usernameInput,
+        roomName: roomNameInput
+      }));
+      
       return true;
     } catch (error) {
       setError(`Failed to connect: ${error.message}`);
@@ -97,6 +119,8 @@ export function LiveKitProvider({ children }) {
       await room.disconnect();
       setConnected(false);
       setMessages([]);
+      // Clear session from localStorage
+      localStorage.removeItem('chatSession');
     }
   };
   
@@ -124,6 +148,31 @@ export function LiveKitProvider({ children }) {
           isAI: false
         }
       ]);
+      
+      // Get AI response from backend
+      try {
+        const response = await axios.post(`${backendUrl}/chat`, {
+          room: roomName,
+          username: username,
+          message: content
+        });
+        
+        if (response.data && response.data.response) {
+          // Add AI response to messages
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              id: Date.now().toString() + '-ai',
+              sender: 'AI Assistant',
+              content: response.data.response,
+              timestamp: new Date(),
+              isAI: true
+            }
+          ]);
+        }
+      } catch (aiError) {
+        console.error('Error getting AI response:', aiError);
+      }
       
       return true;
     } catch (error) {

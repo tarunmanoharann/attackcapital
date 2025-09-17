@@ -43,7 +43,18 @@ export default function Home() {
 }
 
 function ChatContainer() {
-  const { connected } = useLiveKit();
+  const { connected, isLoading } = useLiveKit();
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col bg-white rounded-lg shadow-md overflow-hidden">
