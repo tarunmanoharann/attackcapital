@@ -19,7 +19,7 @@ export function LiveKitProvider({ children }) {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://attackcapital-1.onrender.com';
   const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
   
   // Load session from localStorage on initial render
@@ -132,16 +132,14 @@ export function LiveKitProvider({ children }) {
     }
     
     try {
-      await room.localParticipant.publishData(
-        JSON.stringify({ type: 'chat', content }),
-        { destination: 'all' }
-      );
+      console.log('Sending message:', content);
       
-      // Add message to local state
+      // Add user message to local state immediately
+      const userMessageId = Date.now().toString();
       setMessages((prevMessages) => [
         ...prevMessages,
         {
-          id: Date.now().toString(),
+          id: userMessageId,
           sender: username,
           content,
           timestamp: new Date(),
@@ -149,29 +147,53 @@ export function LiveKitProvider({ children }) {
         }
       ]);
       
+      // Publish to LiveKit
+      await room.localParticipant.publishData(
+        JSON.stringify({ type: 'chat', content }),
+        { destination: 'all' }
+      );
+      
+      console.log('Message published to LiveKit');
+      
       // Get AI response from backend
       try {
+        console.log('Requesting AI response from:', `${backendUrl}/chat`);
         const response = await axios.post(`${backendUrl}/chat`, {
           room: roomName,
           username: username,
           message: content
         });
         
+        console.log('AI response received:', response.data);
+        
         if (response.data && response.data.response) {
           // Add AI response to messages
+          const aiMessageId = Date.now().toString() + '-ai';
           setMessages((prevMessages) => [
             ...prevMessages,
             {
-              id: Date.now().toString() + '-ai',
+              id: aiMessageId,
               sender: 'AI Assistant',
               content: response.data.response,
               timestamp: new Date(),
               isAI: true
             }
           ]);
+          console.log('AI message added to state');
         }
       } catch (aiError) {
         console.error('Error getting AI response:', aiError);
+        // Add error message to chat
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: Date.now().toString() + '-error',
+            sender: 'System',
+            content: 'Failed to get AI response. Please try again.',
+            timestamp: new Date(),
+            isAI: true
+          }
+        ]);
       }
       
       return true;
@@ -188,6 +210,7 @@ export function LiveKitProvider({ children }) {
     roomName,
     messages,
     error,
+    isLoading,
     connectToRoom,
     disconnect,
     sendMessage
