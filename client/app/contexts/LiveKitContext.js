@@ -19,8 +19,17 @@ export function LiveKitProvider({ children }) {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://attackcapital-1.onrender.com';
-  const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  // Ensure URLs are properly formatted with https:// prefix
+  let backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://attackcapital-1.onrender.com';
+  if (!backendUrl.startsWith('http://') && !backendUrl.startsWith('https://')) {
+    backendUrl = 'https://' + backendUrl;
+  }
+  
+  // LiveKit URL with fallback
+  let livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://attackcapital-1.livekit.cloud';
+  if (!livekitUrl.startsWith('wss://') && !livekitUrl.startsWith('ws://')) {
+    livekitUrl = 'wss://' + livekitUrl;
+  }
   
   // Load session from localStorage on initial render
   useEffect(() => {
@@ -124,6 +133,45 @@ export function LiveKitProvider({ children }) {
     }
   };
   
+  // Pre-defined conversation starters and responses
+  const conversationStarters = {
+    'hi': ['Hello! How can I help you today?', 'Hi there! What would you like to discuss?'],
+    'hello': ['Hello! How can I help you today?', 'Hi there! What would you like to discuss?'],
+    'hey': ['Hey! How are you doing today?', 'Hello there! How can I assist you?'],
+    'how are you': ['I\'m doing well, thank you for asking! How about you?', 'I\'m great! How can I help you today?'],
+    'good morning': ['Good morning! How can I make your day better?', 'Morning! What can I help you with today?'],
+    'good afternoon': ['Good afternoon! How can I assist you today?', 'Afternoon! What would you like to discuss?'],
+    'good evening': ['Good evening! How can I help you tonight?', 'Evening! What can I do for you?'],
+    'how\'s your day': ['My day is going well! I\'m here to assist you. What\'s on your mind?', 'Every day is a good day when I can help! What can I do for you?'],
+    'what can you do': ['I can help answer questions, provide information, and have conversations on various topics. What would you like to know?', 'I\'m designed to assist with information, answer questions, and engage in meaningful conversations. How can I help you today?'],
+    'tell me about yourself': ['I\'m an AI assistant designed to help with information and have conversations. I\'m here to assist you with whatever you need!', 'I\'m your AI chat companion, ready to help with questions, provide information, or just chat. What would you like to talk about?']
+  };
+
+  // Function to get a random response from the array
+  const getRandomResponse = (responses) => {
+    const randomIndex = Math.floor(Math.random() * responses.length);
+    return responses[randomIndex];
+  };
+
+  // Check if message matches a conversation starter
+  const checkForQuickResponse = (message) => {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    // Check for exact matches
+    if (conversationStarters[lowerMessage]) {
+      return getRandomResponse(conversationStarters[lowerMessage]);
+    }
+    
+    // Check for partial matches
+    for (const [key, responses] of Object.entries(conversationStarters)) {
+      if (lowerMessage.includes(key)) {
+        return getRandomResponse(responses);
+      }
+    }
+    
+    return null;
+  };
+
   // Send a chat message
   const sendMessage = async (content) => {
     if (!room || !connected) {
@@ -155,23 +203,51 @@ export function LiveKitProvider({ children }) {
       
       console.log('Message published to LiveKit');
       
+      // Check for quick response patterns
+      const quickResponse = checkForQuickResponse(content);
+      
+      // Add a temporary "AI is typing" message
+      const typingId = Date.now().toString() + '-typing';
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: typingId,
+          sender: 'AI Assistant',
+          content: 'Typing...',
+          timestamp: new Date(),
+          isAI: true,
+          isTyping: true
+        }
+      ]);
+      
+      // If we have a quick response, use it instead of calling the API
+      if (quickResponse) {
+        // Short delay to simulate typing
+        setTimeout(() => {
+          // Remove typing indicator
+          setMessages((prevMessages) => 
+            prevMessages.filter(msg => msg.id !== typingId)
+          );
+          
+          // Add AI quick response to state
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              id: Date.now().toString() + '-ai',
+              sender: 'AI Assistant',
+              content: quickResponse,
+              timestamp: new Date(),
+              isAI: true
+            }
+          ]);
+        }, 1000); // 1 second delay for quick responses
+        
+        return true;
+      }
+      
       // Get AI response from backend
       try {
         console.log('Requesting AI response from:', `${backendUrl}/chat`);
-        
-        // Add a temporary "AI is typing" message
-        const typingId = Date.now().toString() + '-typing';
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            id: typingId,
-            sender: 'AI Assistant',
-            content: 'Typing...',
-            timestamp: new Date(),
-            isAI: true,
-            isTyping: true
-          }
-        ]);
         
         // Make the API call with timeout
         const response = await axios.post(`${backendUrl}/chat`, {
