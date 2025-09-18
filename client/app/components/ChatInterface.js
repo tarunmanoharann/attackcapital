@@ -18,7 +18,7 @@ export default function ChatInterface() {
   }, [messages]);
 
   useEffect(() => {
-    // Focus input when component mounts
+    
     inputRef.current?.focus();
   }, []);
   

@@ -12,24 +12,23 @@ export default function ChatMessage({ message }) {
   
   return (
     <div className={`flex flex-col mb-6 ${isAI ? 'items-start' : 'items-end'} animate-fade-in`}>
-      {/* Sender name and timestamp */}
+    
       <div className={`flex items-center gap-2 mb-1 px-1 ${isAI ? 'flex-row' : 'flex-row-reverse'}`}>
         <span className="text-xs font-medium text-gray-600">{sender}</span>
         <span className="text-xs text-gray-500">{formattedTime}</span>
       </div>
-      
-      {/* Message bubble */}
+    
       <div className={`relative max-w-[75%] px-4 py-3 rounded-2xl shadow-sm ${
         isAI 
           ? 'bg-white border border-gray-200 text-gray-800 rounded-tl-md' 
           : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-tr-md'
       }`}>
-        {/* Message content */}
+      
         <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
           {content}
         </div>
         
-        {/* Message tail */}
+       
         <div className={`absolute top-0 w-3 h-3 ${
           isAI 
             ? 'left-0 -translate-x-1 bg-white border-l border-t border-gray-200 rounded-tl-full' 
@@ -37,7 +36,7 @@ export default function ChatMessage({ message }) {
         }`} />
       </div>
       
-      {/* Message status indicator for user messages */}
+   
       {!isAI && (
         <div className="flex items-center gap-1 mt-1 px-1">
           <div className="flex gap-0.5">

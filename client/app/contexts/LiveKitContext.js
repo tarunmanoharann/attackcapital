@@ -19,19 +19,21 @@ export function LiveKitProvider({ children }) {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Ensure URLs are properly formatted with https:// prefix
+
   let backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://attackcapital-1.onrender.com';
   if (!backendUrl.startsWith('http://') && !backendUrl.startsWith('https://')) {
     backendUrl = 'https://' + backendUrl;
   }
   
-  // LiveKit URL with fallback
+ 
   let livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://attackcapital-1.livekit.cloud';
+  console.log('Using LiveKit URL:', livekitUrl);
   if (!livekitUrl.startsWith('wss://') && !livekitUrl.startsWith('ws://')) {
     livekitUrl = 'wss://' + livekitUrl;
+    console.log('Updated LiveKit URL with wss:// prefix:', livekitUrl);
   }
   
-  // Load session from localStorage on initial render
+
   useEffect(() => {
     const savedSession = localStorage.getItem('chatSession');
     if (savedSession) {
@@ -39,18 +41,18 @@ export function LiveKitProvider({ children }) {
       if (savedUsername && savedRoomName) {
         setUsername(savedUsername);
         setRoomName(savedRoomName);
-        // Reconnect to room
+      
         connectToRoom(savedRoomName, savedUsername);
       }
     }
     setIsLoading(false);
   }, []);
   
-  // Initialize room
+  
   useEffect(() => {
     const newRoom = new Room();
     
-    // Set up event listeners
+
     newRoom.on(RoomEvent.ChatMessage, (message) => {
       setMessages((prevMessages) => [
         ...prevMessages,
