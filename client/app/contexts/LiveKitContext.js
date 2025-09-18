@@ -158,13 +158,40 @@ export function LiveKitProvider({ children }) {
       // Get AI response from backend
       try {
         console.log('Requesting AI response from:', `${backendUrl}/chat`);
+        
+        // Add a temporary "AI is typing" message
+        const typingId = Date.now().toString() + '-typing';
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: typingId,
+            sender: 'AI Assistant',
+            content: 'Typing...',
+            timestamp: new Date(),
+            isAI: true,
+            isTyping: true
+          }
+        ]);
+        
+        // Make the API call with timeout
         const response = await axios.post(`${backendUrl}/chat`, {
           room: roomName,
           username: username,
           message: content
+        }, {
+          timeout: 15000, // 15 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
         });
         
         console.log('AI response received:', response.data);
+        
+        // Remove the typing indicator
+        setMessages((prevMessages) => 
+          prevMessages.filter(msg => msg.id !== typingId)
+        );
         
         if (response.data && response.data.response) {
           // Add AI response to messages
@@ -180,16 +207,53 @@ export function LiveKitProvider({ children }) {
             }
           ]);
           console.log('AI message added to state');
+        } else {
+          console.error('No response data or missing response field:', response.data);
+          // Add error message if response format is incorrect
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              id: Date.now().toString() + '-error',
+              sender: 'System',
+              content: 'Received invalid response from AI service.',
+              timestamp: new Date(),
+              isAI: true
+            }
+          ]);
         }
       } catch (aiError) {
         console.error('Error getting AI response:', aiError);
+        
+        // Remove typing indicator if it exists
+        setMessages((prevMessages) => 
+          prevMessages.filter(msg => !msg.isTyping)
+        );
+        
+        // Add detailed error message to chat
+        let errorMessage = 'Failed to get AI response. Please try again.';
+        
+        if (aiError.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Error response:', aiError.response.data);
+          errorMessage = `Server error: ${aiError.response.status}. Please check your backend connection.`;
+        } else if (aiError.request) {
+          // The request was made but no response was received
+          console.error('No response received:', aiError.request);
+          errorMessage = 'No response from server. Please check if the backend is running.';
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error('Request error:', aiError.message);
+          errorMessage = `Request error: ${aiError.message}`;
+        }
+        
         // Add error message to chat
         setMessages((prevMessages) => [
           ...prevMessages,
           {
             id: Date.now().toString() + '-error',
             sender: 'System',
-            content: 'Failed to get AI response. Please try again.',
+            content: errorMessage,
             timestamp: new Date(),
             isAI: true
           }

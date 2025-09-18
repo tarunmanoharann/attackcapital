@@ -3,7 +3,7 @@
 import React from 'react';
 
 export default function ChatMessage({ message }) {
-  const { sender, content, timestamp, isAI } = message;
+  const { sender, content, timestamp, isAI, isTyping } = message;
 
   const formattedTime = new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
